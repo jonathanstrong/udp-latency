@@ -164,7 +164,7 @@ class Server:
                 abs_min = abs(v)
                 self.OFFSET = v
 
-    def listen(self, buffer_size, verbose, sync):
+    def listen(self, buffer_size, verbose, sync, bind="0.0.0.0"):
         if sync:
             self.synchronize(verbose)
 
@@ -210,7 +210,12 @@ class Server:
         print('Total %d packets are received in %f seconds' %
               (len(self.log), cycle))
         print('Average latency: %f second' % latency_avg)
+        print('Average latency: %f ms' % (latency_avg * 1000.0))
+        print('Average latency: %f us' % (latency_avg * 1000000.0))
+        print()
         print('Maximum latency: %f second' % latency_max)
+        print('Maximum latency: %f ms' % (latency_max * 1000.0))
+        print('Maximum latency: %f us' % (latency_max * 1000000.0))
         print('Std latency: %f second' % latency_std)
         print('bandwidth: %f Mbits' % (bandwidth * 8 / 1024 / 1024))
         print('Jitter (Latency Max - Min): %f second' % jitter)
@@ -237,14 +242,15 @@ class Server:
 if __name__ == "__main__":
     try:
         opts, _ = getopt.getopt(
-            sys.argv[1:], 'csf:n:t:b:m:',
-            ["verbose=", "save=", "ip=", "port=", "sync=", "dyna="])
+            sys.argv[1:], 'csf:n:t:b:m:B:',
+            ["verbose=", "save=", "ip=", "port=", "sync=", "dyna=", "bind="])
         opts = dict(opts)
         opts.setdefault('-f', "1")
         opts.setdefault('-n', "1500")
         opts.setdefault('-t', "10")
         opts.setdefault('-b', "1500")
         opts.setdefault('--ip', "127.0.0.1")
+        opts.setdefault('--bind', "0.0.0.0")
         opts.setdefault('--port', "20001")
         opts.setdefault('--verbose', "True")
         opts.setdefault('--save, "result.csv"')
@@ -261,7 +267,7 @@ if __name__ == "__main__":
         sys.exit(2)
 
     if '-c' in opts.keys():
-        client = Client(remote_ip=opts['--ip'], to_port=int(opts['--port']))
+        client = Client(remote_ip=opts['--ip'], to_port=int(opts['--port']), local_ip=opts['--bind'])
         if '-m' in opts:
             opts['-f'] = float(opts['-m']) * 125000 / int(opts['-n'])
         if opts['-f'] == 'm':
@@ -274,7 +280,7 @@ if __name__ == "__main__":
                     dyna=eval(opts['--dyna']))
 
     if '-s' in opts.keys():
-        server = Server(remote_ip=opts['--ip'], local_port=int(opts['--port']))
+        server = Server(remote_ip=opts['--ip'], local_port=int(opts['--port']), local_ip=opts['--bind'])
         server.listen(buffer_size=int(opts['-b']),
                       verbose=eval(opts['--verbose']),
                       sync=eval(opts['--sync']))
